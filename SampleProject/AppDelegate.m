@@ -120,7 +120,11 @@
                                  inView:marsView
                       constrainedToView:scrollView
                permittedArrowDirections:SMCalloutArrowDirectionAny
-                               animated:YES];
+                               animated:YES completion:^(SMCalloutView *cv) {
+                                  
+                                   NSLog(@"Presented!");
+                                   
+                               }];
     
     // Here's an alternate method that adds the callout *inside* the pin view. This may seem strange, but it's how MKMapView
     // does it. It brings the selected pin to the front, then pops up the callout inside the pin's view. This way, the callout
@@ -201,7 +205,9 @@
 }
 
 - (void)dismissCallout {
-    [calloutView dismissCalloutAnimated:NO];
+    [calloutView dismissCalloutAnimated:NO completion:^(SMCalloutView *cv) {
+        NSLog(@"Dismiss");
+    }];
 }
 
 @end

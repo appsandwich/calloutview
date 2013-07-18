@@ -47,6 +47,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     UIImageView *leftCap, *rightCap, *topAnchor, *bottomAnchor, *leftBackground, *rightBackground;
     SMCalloutArrowDirection arrowDirection;
     BOOL popupCancelled;
+    SMCalloutViewHandler _animationHandler;
 }
 
 @synthesize titleLabel = _titleLabel, subtitleLabel = _subtitleLabel;
@@ -216,15 +217,26 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
-    [self presentCalloutFromRect:rect inLayer:view.layer ofView:view constrainedToLayer:constrainedView.layer permittedArrowDirections:arrowDirections animated:animated];
+    [self presentCalloutFromRect:rect inView:view constrainedToView:constrainedView permittedArrowDirections:arrowDirections animated:animated completion:NULL];
+}
+
+- (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    [self presentCalloutFromRect:rect inLayer:view.layer ofView:view constrainedToLayer:constrainedView.layer permittedArrowDirections:arrowDirections animated:animated completion:completion];
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
-    [self presentCalloutFromRect:rect inLayer:layer ofView:nil constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated];
+    [self presentCalloutFromRect:rect inLayer:layer constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated completion:NULL];
+}
+
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    [self presentCalloutFromRect:rect inLayer:layer ofView:nil constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated completion:completion];
 }
 
 // this private method handles both CALayer and UIView parents depending on what's passed.
-- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer ofView:(UIView *)view constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer ofView:(UIView *)view constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    
+    if ((completion != NULL) && (completion != nil))
+        _animationHandler = [completion copy];
     
     // Sanity check: dismiss this callout immediately if it's displayed somewhere
     if (self.layer.superlayer) [self dismissCalloutAnimated:NO];
@@ -374,6 +386,9 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         if ([_delegate respondsToSelector:@selector(calloutViewDidDisappear:)])
             [_delegate calloutViewDidDisappear:self];
     }
+    
+    if ((_animationHandler != NULL) && (_animationHandler != nil))
+        _animationHandler(self);
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
@@ -387,16 +402,29 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (void)dismissCalloutAnimated:(BOOL)animated {
+    [self dismissCalloutAnimated:animated completion:NULL];
+}
+
+- (void)dismissCalloutAnimated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
     [self.layer removeAnimationForKey:@"present"];
     
     popupCancelled = YES;
     
     if (animated) {
+        
+        if ((completion != NULL) && (completion != nil))
+            _animationHandler = [completion copy];
+        
         CAAnimation *animation = [self animationWithType:self.dismissAnimation presenting:NO];
         animation.delegate = self;
         [self.layer addAnimation:animation forKey:@"dismiss"];
     }
-    else [self removeFromParent];
+    else {
+        [self removeFromParent];
+        
+        if ((completion != NULL) && (completion != nil))
+            completion(self);
+    }
 }
 
 - (void)removeFromParent {

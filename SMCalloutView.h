@@ -32,6 +32,9 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 @protocol SMCalloutViewDelegate;
 @class SMCalloutBackgroundView;
 
+@class SMCalloutView;
+typedef void (^SMCalloutViewHandler)(SMCalloutView *calloutView);
+
 //
 // Callout view.
 //
@@ -65,12 +68,15 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // Constrains the callout to the bounds of the given view. Optionally scrolls the given rect into view (plus margins)
 // if -delegate is set and responds to -delayForRepositionWithSize.
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated;
+- (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 // Same as the view-based presentation, but inserts the callout into a CALayer hierarchy instead. Be aware that you'll have to direct
 // your own touches to any accessory views, since CALayer doesn't relay touch events.
 - (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated;
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 - (void)dismissCalloutAnimated:(BOOL)animated;
+- (void)dismissCalloutAnimated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 @end
 
