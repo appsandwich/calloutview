@@ -39,7 +39,6 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 @interface SMCalloutView : UIView
 
 @property (nonatomic, unsafe_unretained) id<SMCalloutViewDelegate> delegate;
-@property (nonatomic, copy) NSString *title, *subtitle; // title/titleView relationship mimics UINavigationBar.
 @property (nonatomic, retain) UIView *leftAccessoryView, *rightAccessoryView;
 @property (nonatomic, readonly) SMCalloutArrowDirection currentArrowDirection;
 @property (nonatomic, retain) SMCalloutBackgroundView *backgroundView; // default is [SMCalloutDrawnBackgroundView new]
@@ -49,6 +48,10 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // may be resized as a result of that (especially if you're using UILabel/UITextField). You may want to subclass
 // and override -sizeThatFits, or just wrap your view in a "generic" UIView if you do not want it to be auto-sized.
 @property (nonatomic, retain) UIView *titleView, *subtitleView;
+@property (nonatomic, strong, readonly) UILabel *titleLabel, *subtitleLabel;
+
+@property (nonatomic, strong) UIColor *backgroundFillColour;
+@property (nonatomic, assign) CGFloat borderWidth;
 
 // Custom "content" view that can be any width/height. If this is set, title/subtitle/titleView/subtitleView are all ignored.
 @property (nonatomic, retain) UIView *contentView;
@@ -78,6 +81,8 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // Abstract base class. Added to the SMCalloutView hierarchy as the lowest view.
 @interface SMCalloutBackgroundView : UIView
 @property (nonatomic, assign) CGPoint arrowPoint; // indicates where the tip of the arrow should be drawn, as a pixel offset
+@property (nonatomic, strong) UIColor *backgroundFillColour;
+@property (nonatomic, assign) CGFloat borderWidth;
 + (SMCalloutBackgroundView *)systemBackgroundView; // returns the standard system background composed of prerendered images
 @end
 
