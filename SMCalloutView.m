@@ -44,14 +44,21 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 #define ANCHOR_MARGIN_MIN 24 // the smallest possible distance from the edge of our control to the edge of the anchor, from either left or right
 
 @implementation SMCalloutView {
-    UILabel *titleLabel, *subtitleLabel;
     UIImageView *leftCap, *rightCap, *topAnchor, *bottomAnchor, *leftBackground, *rightBackground;
     SMCalloutArrowDirection arrowDirection;
     BOOL popupCancelled;
+    SMCalloutViewHandler _animationHandler;
 }
+
+@synthesize titleLabel = _titleLabel, subtitleLabel = _subtitleLabel;
+@synthesize backgroundFillColour = _backgroundFillColour, borderWidth = _borderWidth;
 
 - (id)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
+        
+        _backgroundFillColour = [UIColor whiteColor];
+        _borderWidth = [UIScreen mainScreen].scale == 1 ? 1.0 : 0.5;
+        
         _presentAnimation = SMCalloutAnimationBounce;
         _dismissAnimation = SMCalloutAnimationFade;
         self.backgroundColor = [UIColor clearColor];
@@ -64,19 +71,24 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         // if you have a custom title view defined, return that.
         return self.titleView;
     else {
-        if (!titleLabel) {
-            // create a default titleView
-            titleLabel = [UILabel new];
-            titleLabel.$height = TITLE_HEIGHT;
-            titleLabel.opaque = NO;
-            titleLabel.backgroundColor = [UIColor clearColor];
-            titleLabel.font = [UIFont boldSystemFontOfSize:17];
-            titleLabel.textColor = [UIColor whiteColor];
-            titleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.5];
-            titleLabel.shadowOffset = CGSizeMake(0, -1);
-        }
-        return titleLabel;
+        return self.titleLabel;
     }
+}
+
+-(UILabel *)titleLabel {
+    
+    if (!_titleLabel) {
+        // create a default titleView
+        _titleLabel = [UILabel new];
+        _titleLabel.$height = TITLE_HEIGHT;
+        _titleLabel.opaque = NO;
+        _titleLabel.backgroundColor = [UIColor clearColor];
+        _titleLabel.font = [UIFont boldSystemFontOfSize:17];
+        _titleLabel.textColor = [UIColor whiteColor];
+        _titleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.5];
+        _titleLabel.shadowOffset = CGSizeMake(0, -1);
+    }
+    return _titleLabel;
 }
 
 - (UIView *)subtitleViewOrDefault {
@@ -84,19 +96,24 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         // if you have a custom subtitle view defined, return that.
         return self.subtitleView;
     else {
-        if (!subtitleLabel) {
-            // create a default subtitleView
-            subtitleLabel = [UILabel new];
-            subtitleLabel.$height = SUBTITLE_HEIGHT;
-            subtitleLabel.opaque = NO;
-            subtitleLabel.backgroundColor = [UIColor clearColor];
-            subtitleLabel.font = [UIFont systemFontOfSize:12];
-            subtitleLabel.textColor = [UIColor whiteColor];
-            subtitleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.5];
-            subtitleLabel.shadowOffset = CGSizeMake(0, -1);
-        }
-        return subtitleLabel;
+        return self.subtitleLabel;
     }
+}
+
+-(UILabel *)subtitleLabel {
+    
+    if (!_subtitleLabel) {
+        // create a default subtitleView
+        _subtitleLabel = [UILabel new];
+        _subtitleLabel.$height = SUBTITLE_HEIGHT;
+        _subtitleLabel.opaque = NO;
+        _subtitleLabel.backgroundColor = [UIColor clearColor];
+        _subtitleLabel.font = [UIFont systemFontOfSize:12];
+        _subtitleLabel.textColor = [UIColor whiteColor];
+        _subtitleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.5];
+        _subtitleLabel.shadowOffset = CGSizeMake(0, -1);
+    }
+    return _subtitleLabel;
 }
 
 - (SMCalloutBackgroundView *)backgroundView {
@@ -200,15 +217,26 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
-    [self presentCalloutFromRect:rect inLayer:view.layer ofView:view constrainedToLayer:constrainedView.layer permittedArrowDirections:arrowDirections animated:animated];
+    [self presentCalloutFromRect:rect inView:view constrainedToView:constrainedView permittedArrowDirections:arrowDirections animated:animated completion:NULL];
+}
+
+- (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    [self presentCalloutFromRect:rect inLayer:view.layer ofView:view constrainedToLayer:constrainedView.layer permittedArrowDirections:arrowDirections animated:animated completion:completion];
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
-    [self presentCalloutFromRect:rect inLayer:layer ofView:nil constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated];
+    [self presentCalloutFromRect:rect inLayer:layer constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated completion:NULL];
+}
+
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    [self presentCalloutFromRect:rect inLayer:layer ofView:nil constrainedToLayer:constrainedLayer permittedArrowDirections:arrowDirections animated:animated completion:completion];
 }
 
 // this private method handles both CALayer and UIView parents depending on what's passed.
-- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer ofView:(UIView *)view constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated {
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer ofView:(UIView *)view constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
+    
+    if ((completion != NULL) && (completion != nil))
+        _animationHandler = [completion copy];
     
     // Sanity check: dismiss this callout immediately if it's displayed somewhere
     if (self.layer.superlayer) [self dismissCalloutAnimated:NO];
@@ -218,10 +246,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     
     // form our subviews based on our content set so far
     [self rebuildSubviews];
-    
-    // apply title/subtitle (if present
-    titleLabel.text = self.title;
-    subtitleLabel.text = self.subtitle;
     
     // size the callout to fit the width constraint as best as possible
     self.$size = [self sizeThatFits:CGSizeMake(constrainedRect.size.width, self.calloutHeight)];
@@ -362,6 +386,9 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         if ([_delegate respondsToSelector:@selector(calloutViewDidDisappear:)])
             [_delegate calloutViewDidDisappear:self];
     }
+    
+    if ((_animationHandler != NULL) && (_animationHandler != nil))
+        _animationHandler(self);
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
@@ -375,16 +402,29 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (void)dismissCalloutAnimated:(BOOL)animated {
+    [self dismissCalloutAnimated:animated completion:NULL];
+}
+
+- (void)dismissCalloutAnimated:(BOOL)animated completion:(SMCalloutViewHandler)completion {
     [self.layer removeAnimationForKey:@"present"];
     
     popupCancelled = YES;
     
     if (animated) {
+        
+        if ((completion != NULL) && (completion != nil))
+            _animationHandler = [completion copy];
+        
         CAAnimation *animation = [self animationWithType:self.dismissAnimation presenting:NO];
         animation.delegate = self;
         [self.layer addAnimation:animation forKey:@"dismiss"];
     }
-    else [self removeFromParent];
+    else {
+        [self removeFromParent];
+        
+        if ((completion != NULL) && (completion != nil))
+            completion(self);
+    }
 }
 
 - (void)removeFromParent {
@@ -455,7 +495,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     CGFloat dy = arrowDirection == SMCalloutArrowDirectionUp ? TOP_ANCHOR_MARGIN : 0;
     
     self.titleViewOrDefault.$x = self.innerContentMarginLeft;
-    self.titleViewOrDefault.$y = (self.subtitleView || self.subtitle.length ? TITLE_SUB_TOP : TITLE_TOP) + dy;
+    self.titleViewOrDefault.$y = (self.subtitleView || self.subtitleLabel.text.length ? TITLE_SUB_TOP : TITLE_TOP) + dy;
     self.titleViewOrDefault.$width = self.$width - self.innerContentMarginLeft - self.innerContentMarginRight;
     
     self.subtitleViewOrDefault.$x = self.titleViewOrDefault.$x;
@@ -487,6 +527,8 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 // Callout background base class, includes graphics for +systemBackgroundView
 //
 @implementation SMCalloutBackgroundView
+
+@synthesize backgroundFillColour = _backgroundFillColour, borderWidth = _borderWidth;
 
 + (SMCalloutBackgroundView *)systemBackgroundView {
     SMCalloutImageBackgroundView *background = [SMCalloutImageBackgroundView new];
@@ -704,6 +746,8 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor clearColor];
         self.opaque = NO;
+        self.backgroundFillColour = [UIColor whiteColor];
+        self.borderWidth = [UIScreen mainScreen].scale == 1 ? 1.0 : 0.5;
     }
     return self;
 }
@@ -744,7 +788,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     CGContextRef context = UIGraphicsGetCurrentContext();
     
     // Color Declarations
-    UIColor* fillBlack = [UIColor colorWithRed: 0.11 green: 0.11 blue: 0.11 alpha: 1];
     UIColor* shadowBlack = [UIColor colorWithRed: 0 green: 0 blue: 0 alpha: 0.47];
     UIColor* glossBottom = [UIColor colorWithRed: 1 green: 1 blue: 1 alpha: 0.2];
     UIColor* glossTop = [UIColor colorWithRed: 1 green: 1 blue: 1 alpha: 0.85];
@@ -768,8 +811,8 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     CGSize innerShadowOffset = CGSizeMake(0.1, 1.1);
     CGFloat innerShadowBlurRadius = 1;
     
-    CGFloat backgroundStrokeWidth = 1;
-    CGFloat outerStrokeStrokeWidth = 1;
+    CGFloat backgroundStrokeWidth = self.borderWidth;
+    CGFloat outerStrokeStrokeWidth = self.borderWidth;
     
     // Frames
     CGRect frame = rect;
@@ -812,7 +855,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         [backgroundPath closePath];
         CGContextSaveGState(context);
         CGContextSetShadowWithColor(context, baseShadowOffset, baseShadowBlurRadius, baseShadow.CGColor);
-        [fillBlack setFill];
+        [self.backgroundFillColour setFill];
         [backgroundPath fill];
         
         // Background Inner Shadow

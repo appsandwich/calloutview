@@ -32,6 +32,9 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 @protocol SMCalloutViewDelegate;
 @class SMCalloutBackgroundView;
 
+@class SMCalloutView;
+typedef void (^SMCalloutViewHandler)(SMCalloutView *calloutView);
+
 //
 // Callout view.
 //
@@ -39,7 +42,6 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 @interface SMCalloutView : UIView
 
 @property (nonatomic, unsafe_unretained) id<SMCalloutViewDelegate> delegate;
-@property (nonatomic, copy) NSString *title, *subtitle; // title/titleView relationship mimics UINavigationBar.
 @property (nonatomic, retain) UIView *leftAccessoryView, *rightAccessoryView;
 @property (nonatomic, readonly) SMCalloutArrowDirection currentArrowDirection;
 @property (nonatomic, retain) SMCalloutBackgroundView *backgroundView; // default is [SMCalloutDrawnBackgroundView new]
@@ -49,6 +51,10 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // may be resized as a result of that (especially if you're using UILabel/UITextField). You may want to subclass
 // and override -sizeThatFits, or just wrap your view in a "generic" UIView if you do not want it to be auto-sized.
 @property (nonatomic, retain) UIView *titleView, *subtitleView;
+@property (nonatomic, strong, readonly) UILabel *titleLabel, *subtitleLabel;
+
+@property (nonatomic, strong) UIColor *backgroundFillColour;
+@property (nonatomic, assign) CGFloat borderWidth;
 
 // Custom "content" view that can be any width/height. If this is set, title/subtitle/titleView/subtitleView are all ignored.
 @property (nonatomic, retain) UIView *contentView;
@@ -62,12 +68,15 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // Constrains the callout to the bounds of the given view. Optionally scrolls the given rect into view (plus margins)
 // if -delegate is set and responds to -delayForRepositionWithSize.
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated;
+- (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 // Same as the view-based presentation, but inserts the callout into a CALayer hierarchy instead. Be aware that you'll have to direct
 // your own touches to any accessory views, since CALayer doesn't relay touch events.
 - (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated;
+- (void)presentCalloutFromRect:(CGRect)rect inLayer:(CALayer *)layer constrainedToLayer:(CALayer *)constrainedLayer permittedArrowDirections:(SMCalloutArrowDirection)arrowDirections animated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 - (void)dismissCalloutAnimated:(BOOL)animated;
+- (void)dismissCalloutAnimated:(BOOL)animated completion:(SMCalloutViewHandler)completion;
 
 @end
 
@@ -78,6 +87,8 @@ extern NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView;
 // Abstract base class. Added to the SMCalloutView hierarchy as the lowest view.
 @interface SMCalloutBackgroundView : UIView
 @property (nonatomic, assign) CGPoint arrowPoint; // indicates where the tip of the arrow should be drawn, as a pixel offset
+@property (nonatomic, strong) UIColor *backgroundFillColour;
+@property (nonatomic, assign) CGFloat borderWidth;
 + (SMCalloutBackgroundView *)systemBackgroundView; // returns the standard system background composed of prerendered images
 @end
 

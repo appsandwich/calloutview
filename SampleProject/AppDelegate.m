@@ -40,8 +40,8 @@
     
     calloutView = [SMCalloutView new];
     calloutView.delegate = self;
-    calloutView.title = @"Curiosity";
-    calloutView.subtitle = @"Mars Rover";
+    calloutView.titleLabel.text = @"Curiosity";
+    calloutView.subtitleLabel.text = @"Mars Rover";
     calloutView.rightAccessoryView = topDisclosure;
     calloutView.calloutOffset = topPin.calloutOffset;
     
@@ -113,14 +113,18 @@
     
     // clear any custom view that was set by another pin
     calloutView.contentView = nil;
-    calloutView.backgroundView = [SMCalloutBackgroundView systemBackgroundView]; // use the system graphics
+    //calloutView.backgroundView = [SMCalloutBackgroundView systemBackgroundView]; // use the system graphics
     
     // This does all the magic.
     [calloutView presentCalloutFromRect:topPin.frame
                                  inView:marsView
                       constrainedToView:scrollView
                permittedArrowDirections:SMCalloutArrowDirectionAny
-                               animated:YES];
+                               animated:YES completion:^(SMCalloutView *cv) {
+                                  
+                                   NSLog(@"Presented!");
+                                   
+                               }];
     
     // Here's an alternate method that adds the callout *inside* the pin view. This may seem strange, but it's how MKMapView
     // does it. It brings the selected pin to the front, then pops up the callout inside the pin's view. This way, the callout
@@ -201,7 +205,9 @@
 }
 
 - (void)dismissCallout {
-    [calloutView dismissCalloutAnimated:NO];
+    [calloutView dismissCalloutAnimated:NO completion:^(SMCalloutView *cv) {
+        NSLog(@"Dismiss");
+    }];
 }
 
 @end
