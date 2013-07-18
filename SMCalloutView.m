@@ -389,6 +389,8 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     
     if ((_animationHandler != NULL) && (_animationHandler != nil))
         _animationHandler(self);
+    
+    _animationHandler = NULL;
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
